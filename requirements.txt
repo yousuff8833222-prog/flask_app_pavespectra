@@ -2,3 +2,6 @@ Flask
 tensorflow-cpu
 opencv-python-headless
 gunicorn
+imutils
+numpy
+Pillow
