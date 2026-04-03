@@ -4,5 +4,6 @@ opencv-python-headless
 gunicorn
 imutils
 pandas
+matplotlib
 numpy
 Pillow
