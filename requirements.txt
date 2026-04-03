@@ -3,5 +3,6 @@ tensorflow-cpu
 opencv-python-headless
 gunicorn
 imutils
+pandas
 numpy
 Pillow
