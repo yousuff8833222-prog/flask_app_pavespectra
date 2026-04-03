@@ -8,3 +8,5 @@ matplotlib
 whitenoise
 numpy
 Pillow
+ultralytics
+scikit-learn
