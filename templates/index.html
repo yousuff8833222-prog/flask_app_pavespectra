@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pothole Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { font-family: sans-serif; background-color: #0d1117; color: white; margin: 20px; text-align: center; }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .video-box { border: 2px solid #30363d; border-radius: 8px; overflow: hidden; background: black; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        button { padding: 10px 20px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; }
+        .btn-on { background-color: #238636; color: white; }
+        .btn-off { background-color: #da3633; color: white; }
+        table { width: 80%; border-collapse: collapse; margin-top: 20px; background: #161b22; }
+        th, td { padding: 12px; border: 1px solid #30363d; text-align: left; }
+        th { background-color: #21262d; }
+        .heatmap-container { width: 100%; max-width: 800px; margin-top: 20px; }
+        #heatmap-img { width: 100%; border-radius: 8px; }
+        .status-stable { color: #3fb950; font-weight: bold; }
+        .status-anomaly { color: #f85149; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Pothole Detection Dashboard</h1>
+
+    <div class="container">
+        <div class="controls">
+            <button id="camBtn" class="btn-on" onclick="toggle('camera')">Camera: ON</button>
+            <button id="detBtn" class="btn-on" onclick="toggle('detection')">Detection: ON</button>
+        </div>
+
+        <div class="video-box">
+            <!-- Connection to Flask Video Stream -->
+            <img src="{{ url_for('video_feed') }}" width="700" alt="Video Feed">
+        </div>
+
+        <div class="heatmap-container">
+            <h3>Detection Heatmap</h3>
+            <img id="heatmap-img" src="" alt="Heatmap loading...">
+        </div>
+
+        <h3>Recent Detections & Analytics</h3>
+        <table id="logTable">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Confidence</th>
+                    <th>Coordinates (Lat, Lon)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data injected by JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function toggle(type) {
+            fetch(`/toggle_${type}`)
+                .then(response => response.json())
+                .then(data => {
+                    const btn = document.getElementById(type === 'camera' ? 'camBtn' : 'detBtn');
+                    btn.innerText = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${data.status ? 'ON' : 'OFF'}`;
+                    btn.className = data.status ? 'btn-on' : 'btn-off';
+                });
+        }
+
+        function updateLogs() {
+            fetch('/log_data')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.querySelector('#logTable tbody');
+                    tbody.innerHTML = '';
+                    data.reverse().forEach(row => {
+                        const tr = document.createElement('tr');
+                        const statusClass = row.status === 'ANOMALY' ? 'status-anomaly' : 'status-stable';
+                        tr.innerHTML = `
+                            <td>${row.timestamp}</td>
+                            <td>${(row.confidence * 100).toFixed(1)}%</td>
+                            <td>${row.lat}, ${row.lon}</td>
+                            <td class="${statusClass}">${row.status}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                });
+        }
+
+        function updateHeatmap() {
+            fetch('/heatmap')
+                .then(response => response.text())
+                .then(data => {
+                    if (data) {
+                        document.getElementById('heatmap-img').src = data;
+                    }
+                });
+        }
+
+        // Initial load
+        updateLogs();
+        updateHeatmap();
+
+        // Poll for updates
+        setInterval(updateLogs, 3000);    // Update logs every 3 seconds
+        setInterval(updateHeatmap, 10000); // Update heatmap every 10 seconds
+    </script>
+</body>
+</html>

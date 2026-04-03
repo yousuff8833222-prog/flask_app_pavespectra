@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.git/
+.env
+
+# Data and Model Source
+My Dataset/
+training_performance.png
+truesample.json
+truesample.weights.h5
+
+# Development Scripts
+main.py
+Predictor.py
+verify_weights.py
+convert_to_tflite.py
+single_image_predictor.py

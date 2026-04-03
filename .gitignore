@@ -1,0 +1,13 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Model files and weights (Large Binaries)
+*.h5
+*.keras
+*.tflite
+
+# Project specific ignores
+Real-time Files/
+training_performance.png
