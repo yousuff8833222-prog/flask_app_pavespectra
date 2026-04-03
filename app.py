@@ -380,7 +380,5 @@ def dated_url_for(endpoint, **values):
                 values['q'] = int(os.stat(file_path).st_mtime)
     return url_for(endpoint, **values)
 
-if __name__ == '__main__':
-    # Use Railway's port if available, otherwise default to 5000 for your laptop
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, threaded=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=7860)
