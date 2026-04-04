@@ -53,23 +53,21 @@ class CameraStream:
         self.grabbed = False
         self.frame = None
 
-        # Try primary source (CAP_DSHOW is often better on Windows)
-        self.stream = cv2.VideoCapture(src, cv2.CAP_DSHOW)
-        if not self.stream.isOpened():
-            self.stream = cv2.VideoCapture(src)
+        # Standard source (CAP_DSHOW is Windows only and will fail on Hugging Face)
+        self.stream = cv2.VideoCapture(src)
             
-        (self.grabbed, self.frame) = self.stream.read()
+        if self.stream.isOpened():
+            (self.grabbed, self.frame) = self.stream.read()
 
-        # If first source failed to open or grab a frame, try secondary
+        # Fallback to secondary source if primary fails
         if not self.grabbed or not self.stream.isOpened():
             if self.stream.isOpened():
                 self.stream.release()
             
             logging.info("Source 0 failed, trying Source 1...")
-            self.stream = cv2.VideoCapture(1, cv2.CAP_DSHOW)
-            if not self.stream.isOpened():
-                self.stream = cv2.VideoCapture(1)
-            (self.grabbed, self.frame) = self.stream.read()
+            self.stream = cv2.VideoCapture(1)
+            if self.stream.isOpened():
+                (self.grabbed, self.frame) = self.stream.read()
 
         if not self.grabbed:
             logging.error("CameraStream: Could not grab initial frame from any source.")
