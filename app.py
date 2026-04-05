@@ -8,6 +8,7 @@ import time
 import threading
 import imutils
 import random
+import werkzeug
 from collections import deque
 import numpy as np
 import pandas as pd
@@ -16,7 +17,7 @@ matplotlib.use('Agg')  # Required for non-interactive plotting in threads
 import matplotlib.pyplot as plt
 import io
 import base64
-from flask import Flask, render_template, Response, jsonify, url_for
+from flask import Flask, render_template, Response, jsonify, url_for, request
 import tensorflow as tf
 
 # --- GPU Configuration ---
@@ -36,14 +37,10 @@ from sklearn.ensemble import IsolationForest
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Try to import winsound for Windows alerts
-try:
-    import winsound
-except ImportError:
-    winsound = None
-
 # Path setup
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(SCRIPT_DIR, 'static/uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 class CameraStream:
     """Threaded camera stream for consistent FPS and thread-safety."""
@@ -183,12 +180,8 @@ class PotholeDetector:
             heatmap_coords.append((x_pos, y_pos))
 
 def play_alert_sound():
-    """Triggers a beep on Windows systems."""
-    if winsound:
-        try:
-            winsound.Beep(800, 200) # Softer pitch and shorter duration to reduce annoyance
-        except Exception:
-            pass
+    """Alert sound disabled for server-side deployment."""
+    pass
 
 def generate_frames():
     global camera_stream
@@ -295,6 +288,43 @@ def generate_frames():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/predict_upload', methods=['POST'])
+def predict_upload():
+    """Handle image uploads for public deployment testing."""
+    if 'file' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
+
+    try:
+        # Read image
+        in_memory_file = io.BytesIO()
+        file.save(in_memory_file)
+        data = np.frombuffer(in_memory_file.getvalue(), dtype=np.uint8)
+        img = cv2.imdecode(data, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return jsonify({"error": "Invalid image format"}), 400
+
+        # Preprocess and Predict
+        img_resized = cv2.resize(img, (input_size, input_size))
+        img_normalized = img_resized.astype('float32') / 255.0
+        prediction = model.predict(np.expand_dims(img_normalized, axis=0), verbose=0)
+        
+        predicted_class = int(np.argmax(prediction[0]))
+        confidence = float(np.max(prediction[0]))
+        
+        labels = {0: "Plain", 1: "Pothole"}
+        return jsonify({
+            "label": labels.get(predicted_class, "Unknown"),
+            "confidence": round(confidence * 100, 2)
+        })
+    except Exception as e:
+        logging.error(f"Upload prediction error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/video_feed')
 def video_feed():
