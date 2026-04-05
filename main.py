@@ -148,13 +148,9 @@ for metric_i in range(len(model.metrics_names)):
 print("Saving model weights and configuration file")
 
 model.save(os.path.join(SCRIPT_DIR, 'model.h5'))
+model.save(os.path.join(SCRIPT_DIR, 'model.keras'))
 
-model_json = model.to_json()
-with open(os.path.join(SCRIPT_DIR, "truesample.json"), "w") as json_file:
-    json_file.write(model_json)
-
-model.save_weights(os.path.join(SCRIPT_DIR, "truesample.weights.h5"))
-print("Saved model to disk")
+print(f"Saved model to {SCRIPT_DIR} in both .h5 and .keras formats.")
 
 # --- Accuracy & Loss Visualization ---
 def plot_training_curves(history):

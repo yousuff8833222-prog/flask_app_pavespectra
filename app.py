@@ -100,10 +100,11 @@ app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(SCRIPT_DIR, 'static/')
 
 # Support multiple potential model filenames
 POSSIBLE_MODEL_PATHS = [
-    os.path.join(SCRIPT_DIR, 'model.h5'),   # Absolute path (calculated dynamically)
+    os.path.join(SCRIPT_DIR, 'model.h5'),
     os.path.join(SCRIPT_DIR, 'sample.keras'),
-    'model.h5',                            # Simple relative path (as requested)
-    'sample.keras'                         # Simple relative path (as requested)
+    os.path.join(os.path.dirname(SCRIPT_DIR), 'model.h5'), # Check parent dir
+    'model.h5',
+    'sample.keras'
 ]
 
 # Global State & Locks
@@ -379,4 +380,6 @@ def dated_url_for(endpoint, **values):
     return url_for(endpoint, **values)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=7860)
+    # Use environment port for deployment flexibility
+    port = int(os.environ.get("PORT", 7860))
+    app.run(host="0.0.0.0", port=port)
