@@ -17,5 +17,6 @@ COPY . .
 
 # Set environment variables
 ENV PORT=7860
+ENV PYTHONUNBUFFERED=1
 
 CMD ["python", "app.py"]

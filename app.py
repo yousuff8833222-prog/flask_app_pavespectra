@@ -295,6 +295,9 @@ def predict_upload():
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
     
+    if not has_model or model is None:
+        return jsonify({"error": "Model not loaded on server. Please check logs."}), 500
+
     file = request.files['file']
     if file.filename == '':
         return jsonify({"error": "No file selected"}), 400
